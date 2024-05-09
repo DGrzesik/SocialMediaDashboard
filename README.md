@@ -1,2 +1,2 @@
-# SocialMediaDashboard
-Interactive Streamlit Dashboard Application created to provide an environment for data analysis and visualization of social media interactions.
+# Social Media Dashboard
+Interactive Streamlit Dashboard Application created to provide an environment for analysis and visualization of social media interaction and content.
