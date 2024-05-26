@@ -1,7 +1,8 @@
 import re
+
+import nltk
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import nltk
 
 # check if NLTK session is open
 try:
@@ -10,6 +11,7 @@ except LookupError:
     nltk.download("stopwords")
 
 STOP_WORDS = set(nltk.corpus.stopwords.words('english'))
+
 
 def clean(text: str) -> str:
     """
@@ -25,10 +27,11 @@ def clean(text: str) -> str:
     text = re.sub(r'https?:\/\/[^\s]+', '', text)   # Remove URLs
     text = re.sub(r'@[A-Za-z0-9_]+', '', text)      # Remove user tags
     text = re.sub(r'[^\w\s]', '', text)             # Remove special characters
-    text = re.sub('RT','', text)                    # Remove RT string
+    text = re.sub('RT', '', text)                   # Remove RT string
     text = re.sub('rsysadmin', '', text)            # Remove rsysadmin string
-    text = text.lower()                             # Convert to lowercase
+    text = text.lower()                                         # Convert to lowercase
     return text
+
 
 def remove_stopwords(text: str) -> str:
     """
@@ -44,6 +47,7 @@ def remove_stopwords(text: str) -> str:
     cleaned_words = [word for word in words if word.lower() not in STOP_WORDS]
     cleaned_text = " ".join(cleaned_words)
     return cleaned_text
+
 
 def sentence_embedding(clean_text: np.array) -> np.ndarray:
     """
