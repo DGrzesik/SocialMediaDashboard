@@ -72,14 +72,14 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
     fig.update_layout(
         xaxis_title='Component 1',
         yaxis_title='Component 2',
-        width=1200,
+        width=1000,
         height=900
     )
 
     return fig
 
 
-def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, target: str) -> go.Figure:
+def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, features: str, target: str) -> go.Figure:
     """
     Main function that runs data processing and chart creation.
 
@@ -87,33 +87,32 @@ def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, t
         dataframe (pd.DataFrame): Input dataframe containing text data.
         method (str): Dimensionality reduction method.
         params (dict): Parameters for the reduction method.
+        features (str): String indicating the type of features to visualize.
+            If 'Text', the embeddings of the 'text' column will be visualized.
+            If 'Engagement', dimensionality reduction will be performed, and the columns related to 
+            engagement/interactions will be visualized.
         target (str): Target column in the dataset.
-        num_rows (int): Number of rows to process from the dataframe.
 
     Returns:
         go.Figure: Plotly Figure object.
     """
-    # This part is a placeholder for df
-    # DATA_PATH = 'files/tweets-engagement-metrics-clean-w-topic.csv'
-    # df = pd.read_csv(DATA_PATH)
-    # df = df[df['Lang'] == 'en']
-    # df = df.head(70)
 
-    # Clean text
-    # df['clean_text'] = df['text'].apply(clean)
-    # df['clean_text'] = df['clean_text'].apply(remove_stopwords)
-
-    # Crete embeddings
-    embeddings = sentence_embedding(clean_text=np.array(dataframe.clean_text))
-
-    # Reduce embeddings dimensionality
-    results = reduce_dimensionality(embeddings=embeddings, method=method, params=params)
+    # Based on selected features, either create sentence embeddings or pass columns for dimensionality reduction
+    if features == 'Text':
+        X_features = sentence_embedding(clean_text=np.array(dataframe.clean_text))
+    elif features == 'Engagement':
+        X_features = dataframe[['IsReshare', 'Reach', 'RetweetCount', 'Likes', 'Klout']].values
+    else:
+        raise ValueError(f"Unsupported feature type: {features}")
+        
+    # Reduce features dimensionality
+    reduced_features = reduce_dimensionality(features=X_features, method=method, params=params)
 
     # Define color_scale variable based on target
     color_scale = False if target == 'Topic' else True
 
     fig = create_scatter_plot(
-        results=results,
+        results=reduced_features,
         text=list(dataframe.text),
         target=list(dataframe[target]),
         color_scale=color_scale)

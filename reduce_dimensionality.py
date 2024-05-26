@@ -6,12 +6,12 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 
-def reduce_dimensionality(embeddings: np.ndarray, method: str, params: dict) -> np.ndarray:
+def reduce_dimensionality(features: np.ndarray, method: str, params: dict) -> np.ndarray:
     """
     Reduce dimensionality of embeddings using the specified method.
 
     Parameters:
-    embeddings (np.ndarray): Array of input embeddings.
+    features (np.ndarray): Array of input features.
     method (str): Dimensionality reduction method.
     params (dict): Parameters for the reduction method.
 
@@ -32,5 +32,5 @@ def reduce_dimensionality(embeddings: np.ndarray, method: str, params: dict) -> 
     elif method == 'TriMAP':
         model = trimap.TRIMAP(n_dims=params['n_components'])
 
-    results = model.fit_transform(embeddings)
+    results = model.fit_transform(features)
     return results
