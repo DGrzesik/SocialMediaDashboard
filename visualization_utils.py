@@ -1,9 +1,11 @@
-import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
+import pandas as pd
 import plotly.express as px
-from text_processing import clean, remove_stopwords, sentence_embedding
+import plotly.graph_objects as go
+
 from reduce_dimensionality import reduce_dimensionality
+from text_processing import sentence_embedding
+
 
 def create_scatter_plot(results: np.ndarray, text: list, target: list, color_scale: bool = True) -> go.Figure:
     """
@@ -33,8 +35,8 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
             hoverinfo='text',
             marker=dict(
                 color=target,
-                colorscale='Viridis',           
-                colorbar=dict(title='Target')   
+                colorscale='Viridis',
+                colorbar=dict(title='Target')
             )
         ))
     else:
@@ -43,7 +45,7 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
         color_map = {category: colors[i % len(colors)] for i, category in enumerate(set(target))}
 
         # A set of categories already in legend
-        added_to_legend = set()  
+        added_to_legend = set()
         for x, y, tweet_text, category in zip(results[:, 0], results[:, 1], text, target):
             color = color_map[category]
 
@@ -68,10 +70,10 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
 
     # Update layout of the figure
     fig.update_layout(
-        xaxis_title='Component 1', 
+        xaxis_title='Component 1',
         yaxis_title='Component 2',
-        width=900,  
-        height=600
+        width=1200,
+        height=900
     )
 
     return fig
@@ -92,29 +94,27 @@ def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, t
         go.Figure: Plotly Figure object.
     """
     # This part is a placeholder for df
-    DATA_PATH = 'files/tweets-engagement-metrics-clean-w-topic.csv'
-    df = pd.read_csv(DATA_PATH)
-    df = df[df['Lang'] == 'en']
-    df = df.head(70)
-
+    # DATA_PATH = 'files/tweets-engagement-metrics-clean-w-topic.csv'
+    # df = pd.read_csv(DATA_PATH)
+    # df = df[df['Lang'] == 'en']
+    # df = df.head(70)
 
     # Clean text
-    df['clean_text'] = df['text'].apply(clean)
-    df['clean_text'] = df['clean_text'].apply(remove_stopwords)
-    
+    # df['clean_text'] = df['text'].apply(clean)
+    # df['clean_text'] = df['clean_text'].apply(remove_stopwords)
+
     # Crete embeddings
-    embeddings = sentence_embedding(clean_text=np.array(df.clean_text))
+    embeddings = sentence_embedding(clean_text=np.array(dataframe.clean_text))
 
     # Reduce embeddings dimensionality
-    results = reduce_dimensionality(embeddings=embeddings, method=method, params=params)    
+    results = reduce_dimensionality(embeddings=embeddings, method=method, params=params)
 
     # Define color_scale variable based on target
     color_scale = False if target == 'Topic' else True
 
-    fig = create_scatter_plot(results=results, text=list(df.text), target=list(df[target]), color_scale=color_scale)
-
+    fig = create_scatter_plot(
+        results=results,
+        text=list(dataframe.text),
+        target=list(dataframe[target]),
+        color_scale=color_scale)
     return fig
-
-
-
-
