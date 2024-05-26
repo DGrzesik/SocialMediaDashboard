@@ -12,7 +12,7 @@ def df_to_csv(dataframe):
 
 
 @st.cache_data()
-def set_params(nc, p, lr, nn, m):
+def set_params(nc, p, nn, lr, m):
     return {
         'n_components': nc,
         'perplexity': p,
@@ -91,7 +91,7 @@ if df is not None:
 
     method = st.sidebar.selectbox('Select visualization method', constants.METHOD_NAMES)
 
-    st.title(target + ' analysis')
+    st.subheader(target + ' analysis')
 
     st.subheader(method)
 
@@ -108,7 +108,7 @@ if df is not None:
         if set_learning_rate is True:
             learning_rate = st.sidebar.slider("Set learning rate", 10, 1000, 500)
         else:
-            learning_rate = 500
+            learning_rate = 'auto'
             st.sidebar.info("Learning rate is set to 'auto'.")
 
     if method == 'PCA':
@@ -122,22 +122,22 @@ if df is not None:
     if method == 'TriMAP':
         n_components = st.sidebar.number_input("Set number of components", 2, 100, 2)
 
-    params = set_params(n_components, perplexity, n_neighbors, learning_rate, metric)
+    params = set_params(nc=n_components, p=perplexity, nn=n_neighbors, lr=learning_rate, m=metric)
 
     st.sidebar.markdown('<hr>', unsafe_allow_html=True)
 
     st.sidebar.subheader("Additional")
 
     show_correlation_matrix = st.sidebar.checkbox("Show correlation matrix", False)
-    st.write(df.shape)
-    for param in params.keys():
-        value = params[param]
-        if value is not None:
-            st.write(param + ": " + f"{params[param] if params[param] is not None else ''}")
+    # st.write(df.shape)
+    # for param in params.keys():
+    #     value = params[param]
+    #     if value is not None:
+    #         st.write(param + ": " + f"{params[param] if params[param] is not None else ''}")
     visualize_button = st.button("Visualize")
     if visualize_button:
         with st.spinner('Preparing plot'):
-            fig = visualization_utils.generate_visualization(df, method, params, target)
+            fig = visualization_utils.generate_visualization(df, method, params, features, target)
         st.plotly_chart(fig)
 
     st.markdown('<hr>', unsafe_allow_html=True)
