@@ -79,12 +79,19 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
     return fig
 
 
-def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, features: str, target: str) -> go.Figure:
+def generate_visualization(
+        dataframe: pd.DataFrame,
+        available_columns: list,
+        method: str,
+        params: dict,
+        features: str,
+        target: str) -> go.Figure:
     """
     Main function that runs data processing and chart creation.
 
     Parameters:
         dataframe (pd.DataFrame): Input dataframe containing text data.
+        available_columns (list): List of available engagement columns.
         method (str): Dimensionality reduction method.
         params (dict): Parameters for the reduction method.
         features (str): String indicating the type of features to visualize.
@@ -101,7 +108,7 @@ def generate_visualization(dataframe: pd.DataFrame, method: str, params: dict, f
     if features == 'Text':
         X_features = sentence_embedding(clean_text=np.array(dataframe.clean_text))
     elif features == 'Engagement':
-        X_features = dataframe[['IsReshare', 'Reach', 'RetweetCount', 'Likes', 'Klout']].values
+        X_features = dataframe[available_columns].values
     else:
         raise ValueError(f"Unsupported feature type: {features}")
         
