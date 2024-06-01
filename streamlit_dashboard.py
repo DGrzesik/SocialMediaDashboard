@@ -3,6 +3,7 @@ import streamlit as st
 import constants
 import data_processing
 import visualization_utils
+from communities import explore_communities
 
 st.set_page_config(page_title="Social Media Dashboard", layout="wide")  # wide
 
@@ -123,8 +124,35 @@ if df is not None:
         n_components = st.sidebar.number_input("Set number of components", 2, 100, 2)
 
     params = set_params(nc=n_components, p=perplexity, nn=n_neighbors, lr=learning_rate, m=metric)
+    
+    visualize_button = st.button("Visualize")
+    if visualize_button:
+        with st.spinner('Preparing plot'):
+            fig = visualization_utils.generate_visualization(df, method, params, features, target)
+        st.plotly_chart(fig)    
+
+    st.markdown('<hr>', unsafe_allow_html=True)
+    
+    st.sidebar.markdown('<hr>', unsafe_allow_html=True)
+
+    st.sidebar.subheader("Explore communities parameters")
+    
+    sample_size = st.sidebar.number_input("Set sample size", 0, df.shape[0], 100)
+    similarity_threshold = st.sidebar.slider("Set similarity threshold", 0.0, 1.0, 0.5)
 
     st.sidebar.markdown('<hr>', unsafe_allow_html=True)
+
+    st.subheader('Community detection')
+    
+    visualize_button = st.button("Explore communities")
+    if visualize_button:    
+        with st.spinner('Preparing plot'):
+            fig1, fig2 = explore_communities(df, sample_size, similarity_threshold)
+            
+        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True)
+        
+    st.markdown('<hr>', unsafe_allow_html=True)
 
     st.sidebar.subheader("Additional")
 
@@ -134,13 +162,6 @@ if df is not None:
     #     value = params[param]
     #     if value is not None:
     #         st.write(param + ": " + f"{params[param] if params[param] is not None else ''}")
-    visualize_button = st.button("Visualize")
-    if visualize_button:
-        with st.spinner('Preparing plot'):
-            fig = visualization_utils.generate_visualization(df, method, params, features, target)
-        st.plotly_chart(fig)
-
-    st.markdown('<hr>', unsafe_allow_html=True)
 
     if show_correlation_matrix is True:
         st.subheader("Correlation matrix")
@@ -149,6 +170,6 @@ if df is not None:
         corr_matrix = corr_df.corr()
 
         st.dataframe(corr_matrix, width=800)
-
+        
 else:
     st.info("Upload files with appropriate data to see possible options!")
