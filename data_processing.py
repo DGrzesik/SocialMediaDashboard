@@ -72,12 +72,19 @@ def get_data(datafiles):
 
 
 def get_available_features(dataframe):
-    columns = [x.lower() for x in dataframe.columns]
+    columns = {}
     available_features = []
-    if 'text' in columns:
-        available_features.append('text')
-    available_features.extend(list(set(constants.ENGAGEMENT_FEATURES) & set(columns)))
-    return available_features
+    available_columns = []
+    for x in dataframe.columns:
+        columns[x.lower()] = x
+    for key, value in columns.items():
+        if key in constants.ENGAGEMENT_FEATURES:
+            available_features.append(key)
+            available_columns.append(value)
+    if 'text' in columns.keys():
+        available_features.append("text")
+        available_columns.append(columns["text"])
+    return available_features, available_columns
 
 
 def get_available_targets(dataframe):

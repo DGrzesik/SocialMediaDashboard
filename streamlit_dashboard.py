@@ -1,9 +1,9 @@
 import streamlit as st
 
+import communities
 import constants
 import data_processing
 import visualization_utils
-from communities import explore_communities
 
 st.set_page_config(page_title="Social Media Dashboard", layout="wide")  # wide
 
@@ -38,6 +38,16 @@ def get_data(datafiles):
     return data_processing.get_data(datafiles)
 
 
+@st.cache_data(show_spinner=False)
+def visualize_data(data, a_f, m, p, f, t):
+    return visualization_utils.generate_visualization(data, a_f, m, p, f, t)
+
+
+@st.cache_data(show_spinner=False)
+def explore_communities(data, s_s, s_t):
+    return communities.explore_communities(data, s_s, s_t)
+
+
 st.sidebar.title("Options")
 st.sidebar.subheader('Upload data')
 
@@ -48,7 +58,7 @@ uploader_container = st.sidebar.container()
 uploaded_files = st.sidebar.file_uploader("Upload data for analysis:", type=[".csv", ".xlsx"],
                                           accept_multiple_files=True)
 
-clear_button = uploader_container.button("Clear memorized uploader data")
+clear_button = uploader_container.button("Clear memorized data")
 
 if clear_button:
     st.cache_data.clear()
@@ -75,7 +85,7 @@ if df is not None:
 
     st.sidebar.subheader('Data')
 
-    available_features = get_available_features(df)
+    available_features, available_columns = get_available_features(df)
     available_targets = get_available_targets(df)
     selectable_features = []
     if 'text' in available_features:
@@ -124,52 +134,67 @@ if df is not None:
         n_components = st.sidebar.number_input("Set number of components", 2, 100, 2)
 
     params = set_params(nc=n_components, p=perplexity, nn=n_neighbors, lr=learning_rate, m=metric)
-    
-    visualize_button = st.button("Visualize")
+
+    if 'show_first_plot' not in st.session_state:
+        st.session_state.show_first_plot = False
+    if 'show_second_plot' not in st.session_state:
+        st.session_state.show_second_plot = False
+
+    button_container_vis = st.container()
+    col1, col2 = button_container_vis.columns([0.08, 0.9], gap="small")
+    visualize_button = col1.button("Visualize")
+    hide_button = col2.button("Hide visualization")
     if visualize_button:
-        with st.spinner('Preparing plot'):
-            fig = visualization_utils.generate_visualization(df, method, params, features, target)
-        st.plotly_chart(fig)    
+        st.session_state.show_first_plot = True
+    if hide_button:
+        st.session_state.show_first_plot = False
+
+    if st.session_state.show_first_plot:
+        with (st.spinner('Preparing plot')):
+            fig = visualize_data(df, available_columns, method, params, features, target)
+            st.plotly_chart(fig)
 
     st.markdown('<hr>', unsafe_allow_html=True)
-    
+
     st.sidebar.markdown('<hr>', unsafe_allow_html=True)
 
     st.sidebar.subheader("Explore communities parameters")
-    
+
     sample_size = st.sidebar.number_input("Set sample size", 0, df.shape[0], 100)
     similarity_threshold = st.sidebar.slider("Set similarity threshold", 0.0, 1.0, 0.5)
 
     st.sidebar.markdown('<hr>', unsafe_allow_html=True)
 
     st.subheader('Community detection')
-    
-    visualize_button = st.button("Explore communities")
-    if visualize_button:    
+
+    button_container_expl = st.container()
+    col1, col2 = button_container_expl.columns([0.17, 0.9])
+    visualize_button = col1.button("Explore communities")
+    hide_button = col2.button("Hide analysis")
+    if visualize_button:
+        st.session_state.show_second_plot = True
+    if hide_button:
+        st.session_state.show_second_plot = False
+
+    if st.session_state.show_second_plot:
         with st.spinner('Preparing plot'):
             fig1, fig2 = explore_communities(df, sample_size, similarity_threshold)
-            
-        st.plotly_chart(fig1, use_container_width=True)
-        st.plotly_chart(fig2, use_container_width=True)
-        
+            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True)
+
     st.markdown('<hr>', unsafe_allow_html=True)
 
     st.sidebar.subheader("Additional")
 
     show_correlation_matrix = st.sidebar.checkbox("Show correlation matrix", False)
-    # st.write(df.shape)
-    # for param in params.keys():
-    #     value = params[param]
-    #     if value is not None:
-    #         st.write(param + ": " + f"{params[param] if params[param] is not None else ''}")
 
     if show_correlation_matrix is True:
         st.subheader("Correlation matrix")
-        cols = list(set(available_features) - {'text'})
+        cols = list(set(available_columns) - {'text'} - {"Text"})
         corr_df = df[cols]
         corr_matrix = corr_df.corr()
 
         st.dataframe(corr_matrix, width=800)
-        
+
 else:
     st.info("Upload files with appropriate data to see possible options!")

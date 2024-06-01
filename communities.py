@@ -1,10 +1,11 @@
-import pandas as pd
-import networkx as nx
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from difflib import SequenceMatcher
 from itertools import combinations, product
+
+import networkx as nx
+import pandas as pd
+import plotly.graph_objects as go
 from community import community_louvain
+from plotly.subplots import make_subplots
 
 
 def explore_communities(df, sample_size, similarity_threshold):
@@ -25,24 +26,24 @@ def explore_communities(df, sample_size, similarity_threshold):
     fig1 : Plotly Figure Object.
     fig2 : Plotly Figure Object.
     """
-    
+
     # Sample and clean data
     df = df.sample(n=sample_size, random_state=13).drop_duplicates(subset='TweetID')
     df['clean_text'] = df['clean_text'].astype(str)
-    
+
     # Generate user combinations and compute similarities
     user_combinations = combinations(df['UserID'].unique(), 2)
-    
+
     def compute_similarity(user1, user2):
         posts1 = df.loc[df['UserID'] == user1, 'clean_text']
         posts2 = df.loc[df['UserID'] == user2, 'clean_text']
         similarities = [
-            SequenceMatcher(None, post1, post2).ratio() 
+            SequenceMatcher(None, post1, post2).ratio()
             for post1, post2 in product(posts1, posts2)
             if SequenceMatcher(None, post1, post2).ratio() > similarity_threshold
         ]
         return sum(similarities) / len(similarities) if similarities else 0
-    
+
     similarities = {
         (user1, user2): compute_similarity(user1, user2)
         for user1, user2 in user_combinations
@@ -52,17 +53,17 @@ def explore_communities(df, sample_size, similarity_threshold):
         {'user1': user1, 'user2': user2, 'value': value}
         for (user1, user2), value in similarities.items() if value > 0
     ])
-    
+
     # Create the graph
     G = nx.from_pandas_edgelist(sim_df, source='user1', target='user2', edge_attr='value')
-    
+
     # Detect communities
     communities = community_louvain.best_partition(G)
     num_communities = max(communities.values()) + 1
-    
+
     # Generate positions
     pos = nx.kamada_kawai_layout(G)
-    
+
     # Prepare edge traces
     edge_x = []
     edge_y = []
@@ -133,15 +134,22 @@ def explore_communities(df, sample_size, similarity_threshold):
         'betweenness': nx.betweenness_centrality(G),
         'closeness': nx.closeness_centrality(G)
     }
-    
+
     # Plot centralities with Plotly
-    fig2 = make_subplots(rows=1, cols=3, subplot_titles=('Degree Centrality', 'Betweenness Centrality', 'Closeness Centrality'))
+    fig2 = make_subplots(
+        rows=1,
+        cols=3,
+        subplot_titles=('Degree Centrality', 'Betweenness Centrality', 'Closeness Centrality'))
 
     for i, (name, centrality) in enumerate(centralities.items(), start=1):
-        df_centrality = pd.DataFrame.from_dict(centrality, orient='index', columns=['centrality']).nlargest(20, 'centrality')
+        df_centrality = pd.DataFrame.from_dict(
+            centrality,
+            orient='index',
+            columns=['centrality']).nlargest(20, 'centrality')
         fig2.add_trace(
             go.Bar(x=df_centrality.index, y=df_centrality['centrality'], name=name),
-            row=1, col=i
+            row=1,
+            col=i
         )
 
     fig2.update_layout(showlegend=False, title_text="Top 20 Nodes by Centrality")
