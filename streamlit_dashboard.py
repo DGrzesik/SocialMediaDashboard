@@ -92,6 +92,15 @@ if df is not None:
         selectable_features.append('Text')
     if len(set(available_features) - {'text'}) > 0:
         selectable_features.append('Engagement')
+
+    feature_info = st.sidebar.checkbox("Show detailed info about available features")
+    if feature_info:
+        st.sidebar.info("**Available features:**\n"
+                        + "\n".join([f"- {feature}" for feature in available_features])
+                        + "\n\n**out of:**\n"
+                        + "\n".join([f"- {feature}" for feature in list(set(constants.ENGAGEMENT_FEATURES) | {'text'})])
+                        )
+
     features = st.sidebar.selectbox('Select data to analyze', selectable_features)
 
     target = st.sidebar.selectbox('Select target', available_targets)
@@ -192,9 +201,9 @@ if df is not None:
         st.subheader("Correlation matrix")
         cols = list(set(available_columns) - {'text'} - {"Text"})
         corr_df = df[cols]
-        corr_matrix = corr_df.corr()
-
-        st.dataframe(corr_matrix, width=800)
+        with st.spinner('Preparing matrix'):
+            corr_matrix = corr_df.corr()
+            st.dataframe(corr_matrix, width=800)
 
 else:
     st.info("Upload files with appropriate data to see possible options!")

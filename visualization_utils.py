@@ -108,7 +108,7 @@ def generate_visualization(
     if features == 'Text':
         X_features = sentence_embedding(clean_text=np.array(dataframe.clean_text))
     elif features == 'Engagement':
-        X_features = dataframe[available_columns].values
+        X_features = dataframe[list(set(available_columns) - {"text"})].values
     else:
         raise ValueError(f"Unsupported feature type: {features}")
         
