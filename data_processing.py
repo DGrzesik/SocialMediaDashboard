@@ -13,20 +13,22 @@ def validate_dataframe(dataframe):
     columns = [x.lower() for x in dataframe.columns]
     if len(missing_columns) == 2:
         violations.append("Dataframe is missing label columns")
-    if "lang" not in columns:
+    if "language" not in columns:
         constraints.append("No language column - visualized data might be incorrect")
+    else:
+        constraints.append("Language column detected - only records in English will be kept")
 
     return constraints, violations
 
 
 def clean_text(dataframe):
     cleaned_df = dataframe.copy()
-    if "lang" in cleaned_df.columns:
-        cleaned_df = cleaned_df[(cleaned_df["lang"] == 'en') | (cleaned_df["lang"] == 'english')]
-    if "Lang" in cleaned_df.columns:
-        cleaned_df = cleaned_df[(cleaned_df["Lang"] == 'en') | (cleaned_df["Lang"] == 'english')]
-    cleaned_df["clean_text"] = cleaned_df["text"].apply(text_processing.clean)
+    if 'language' in cleaned_df.columns:
+        cleaned_df = cleaned_df[cleaned_df['language'].isin(['en', 'En', 'EN', 'eng',  'Eng', 'ENG', 'english', 'English', 'ENGLISH'])]
+
+    cleaned_df["clean_text"] = cleaned_df['text'].apply(text_processing.clean)
     cleaned_df['clean_text'] = cleaned_df['clean_text'].apply(text_processing.remove_stopwords)
+    
     return cleaned_df
 
 
@@ -41,12 +43,15 @@ def get_data(datafiles):
         df_raw = pd.read_excel(first_filename)
     else:
         return None
+    
+    df_raw.rename(columns=str.lower, inplace=True)
     columns = df_raw.columns
 
     for idx in range(1, len(datafiles)):
         file = datafiles[idx]
         if file.name.endswith('.csv'):
             df_file = pd.read_csv(file)
+            df_file.rename(columns=str.lower, inplace=True)
             if list(columns) != list(df_file.columns):
                 st.sidebar.error("Files must contain data with the same columns.")
                 return None
@@ -66,32 +71,18 @@ def get_data(datafiles):
         return None
     if constraints:
         st.sidebar.warning("**Warnings:**\n" + "\n".join([f"- {constraint}" for constraint in constraints]))
-    if "text" in columns:
+    if 'text' in columns:
         df_raw = clean_text(df_raw)
     return df_raw
 
 
 def get_available_features(dataframe):
-    columns = {}
-    available_features = []
-    available_columns = []
-    for x in dataframe.columns:
-        columns[x.lower()] = x
-    for key, value in columns.items():
-        if key in constants.ENGAGEMENT_FEATURES:
-            available_features.append(key)
-            available_columns.append(value)
-    if 'text' in columns.keys():
+    available_features = [x for x in dataframe.columns if x in constants.ENGAGEMENT_FEATURES]
+    if 'text' in dataframe.columns:
         available_features.append("text")
-        available_columns.append(columns["text"])
-    return available_features, available_columns
+    return available_features
 
 
 def get_available_targets(dataframe):
-    columns = [x.lower() for x in dataframe.columns]
-    available_targets = []
-    if 'topic' in columns:
-        available_targets.append('Topic')
-    if 'sentiment' in columns:
-        available_targets.append('Sentiment')
+    available_targets = [x for x in dataframe.columns if x in constants.TARGETS]    
     return available_targets
