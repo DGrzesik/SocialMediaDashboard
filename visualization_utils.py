@@ -81,7 +81,7 @@ def create_scatter_plot(results: np.ndarray, text: list, target: list, color_sca
 
 def generate_visualization(
         dataframe: pd.DataFrame,
-        available_columns: list,
+        available_features: list,
         method: str,
         params: dict,
         features: str,
@@ -105,10 +105,10 @@ def generate_visualization(
     """
 
     # Based on selected features, either create sentence embeddings or pass columns for dimensionality reduction
-    if features == 'Text':
+    if features == 'text':
         X_features = sentence_embedding(clean_text=np.array(dataframe.clean_text))
-    elif features == 'Engagement':
-        X_features = dataframe[list(set(available_columns) - {"text"})].values
+    elif features == 'engagement':
+        X_features = dataframe[list(set(available_features) - {"text"})].values
     else:
         raise ValueError(f"Unsupported feature type: {features}")
         
@@ -116,7 +116,7 @@ def generate_visualization(
     reduced_features = reduce_dimensionality(features=X_features, method=method, params=params)
 
     # Define color_scale variable based on target
-    color_scale = False if target == 'Topic' else True
+    color_scale = False if target == 'topic' else True
 
     fig = create_scatter_plot(
         results=reduced_features,

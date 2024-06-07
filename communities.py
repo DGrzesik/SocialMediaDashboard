@@ -1,6 +1,5 @@
 from difflib import SequenceMatcher
 from itertools import combinations, product
-
 import networkx as nx
 import pandas as pd
 import plotly.graph_objects as go
@@ -25,29 +24,39 @@ def explore_communities(df, sample_size, similarity_threshold):
     -------
     fig1 : Plotly Figure Object.
     fig2 : Plotly Figure Object.
+    communities : dict with community assignments.
+    used_texts : DataFrame with texts used for community detection.
     """
 
     # Sample and clean data
-    df = df.sample(n=sample_size, random_state=13).drop_duplicates(subset='TweetID')
+    if 'postid' in df.columns:
+        df = df.sample(n=sample_size, random_state=13).drop_duplicates(subset='postid')
+        
     df['clean_text'] = df['clean_text'].astype(str)
 
     # Generate user combinations and compute similarities
-    user_combinations = combinations(df['UserID'].unique(), 2)
+    user_combinations = combinations(df['userid'].unique(), 2)
+    used_texts_list = []
 
     def compute_similarity(user1, user2):
-        posts1 = df.loc[df['UserID'] == user1, 'clean_text']
-        posts2 = df.loc[df['UserID'] == user2, 'clean_text']
+        posts1 = df.loc[df['userid'] == user1, 'clean_text']
+        posts2 = df.loc[df['userid'] == user2, 'clean_text']
         similarities = [
             SequenceMatcher(None, post1, post2).ratio()
             for post1, post2 in product(posts1, posts2)
             if SequenceMatcher(None, post1, post2).ratio() > similarity_threshold
         ]
+        if similarities:
+            used_texts_list.append(df[df['userid'] == user1])
+            used_texts_list.append(df[df['userid'] == user2])
         return sum(similarities) / len(similarities) if similarities else 0
 
     similarities = {
         (user1, user2): compute_similarity(user1, user2)
         for user1, user2 in user_combinations
     }
+
+    used_texts = pd.concat(used_texts_list).drop_duplicates(subset=['userid', 'clean_text'])
 
     sim_df = pd.DataFrame([
         {'user1': user1, 'user2': user2, 'value': value}
@@ -87,6 +96,7 @@ def explore_communities(df, sample_size, similarity_threshold):
     node_x = []
     node_y = []
     node_text = []
+    node_hovertext = []
     node_color = []
     for node in G.nodes():
         x, y = pos[node]
@@ -94,12 +104,14 @@ def explore_communities(df, sample_size, similarity_threshold):
         node_y.append(y)
         node_text.append(str(node))
         node_color.append(communities[node])
+        node_hovertext.append(f"Community {communities[node]}")
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers+text',
         hoverinfo='text',
         text=node_text,
+        hovertext=node_hovertext,
         marker=dict(
             showscale=True,
             colorscale='Viridis',
@@ -154,4 +166,4 @@ def explore_communities(df, sample_size, similarity_threshold):
 
     fig2.update_layout(showlegend=False, title_text="Top 20 Nodes by Centrality")
 
-    return fig1, fig2
+    return fig1, fig2, communities, used_texts
