@@ -91,7 +91,7 @@ def generate_visualization(
 
     Parameters:
         dataframe (pd.DataFrame): Input dataframe containing text data.
-        available_columns (list): List of available engagement columns.
+        available_features (list): List of available engagement columns.
         method (str): Dimensionality reduction method.
         params (dict): Parameters for the reduction method.
         features (str): String indicating the type of features to visualize.
@@ -111,16 +111,22 @@ def generate_visualization(
         X_features = dataframe[list(set(available_features) - {"text"})].values
     else:
         raise ValueError(f"Unsupported feature type: {features}")
-        
+
     # Reduce features dimensionality
     reduced_features = reduce_dimensionality(features=X_features, method=method, params=params)
 
     # Define color_scale variable based on target
     color_scale = False if target == 'topic' else True
-
-    fig = create_scatter_plot(
-        results=reduced_features,
-        text=list(dataframe.text),
-        target=list(dataframe[target]),
-        color_scale=color_scale)
+    if 'text' in dataframe.columns:
+        fig = create_scatter_plot(
+            results=reduced_features,
+            text=list(dataframe.text),
+            target=list(dataframe[target]),
+            color_scale=color_scale)
+    else:
+        fig = create_scatter_plot(
+            results=reduced_features,
+            text=list(''),
+            target=list(dataframe[target]),
+            color_scale=color_scale)
     return fig
