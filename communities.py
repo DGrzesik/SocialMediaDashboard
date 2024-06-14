@@ -1,5 +1,6 @@
 from difflib import SequenceMatcher
 from itertools import combinations, product
+
 import networkx as nx
 import pandas as pd
 import plotly.graph_objects as go
@@ -31,7 +32,7 @@ def explore_communities(df, sample_size, similarity_threshold):
     # Sample and clean data
     if 'postid' in df.columns:
         df = df.sample(n=sample_size, random_state=13).drop_duplicates(subset='postid')
-        
+
     df['clean_text'] = df['clean_text'].astype(str)
 
     # Generate user combinations and compute similarities
@@ -51,7 +52,7 @@ def explore_communities(df, sample_size, similarity_threshold):
             used_texts_list.append(df[df['userid'] == user2])
         return sum(similarities) / len(similarities) if similarities else 0
 
-    similarities = {
+    all_similarities = {
         (user1, user2): compute_similarity(user1, user2)
         for user1, user2 in user_combinations
     }
@@ -60,7 +61,7 @@ def explore_communities(df, sample_size, similarity_threshold):
 
     sim_df = pd.DataFrame([
         {'user1': user1, 'user2': user2, 'value': value}
-        for (user1, user2), value in similarities.items() if value > 0
+        for (user1, user2), value in all_similarities.items() if value > 0
     ])
 
     # Create the graph
