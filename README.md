@@ -2,7 +2,7 @@
 
 Konieczne jest zainstalowanie i uruchomienie Docker Desktop.
 
-Następnie, aby uruchomić aplikację w kontenerze dockerowym, należy wykonać komendę:
+Następnie, aby uruchomić aplikację w kontenerze dockerowym, z poziomu projektu należy wykonać komendę:
 
 ```{text}
 docker build -t streamlit-dashboard .
@@ -20,7 +20,7 @@ Po pełnym załadowaniu, aplikacja będzie dostępna pod adresem http://localhos
 
 It's necessary to have installed and started the Docker Desktop app.
 
-Then, to launch the application in your docker container, you must first run the following commands:
+Then, to launch the application in your docker container, you must first run the following commands from the project directory:
 
 ```{text}
 docker build -t streamlit-dashboard .
