@@ -13,9 +13,9 @@ def df_to_csv(dataframe):
 
 
 @st.cache_data()
-def set_params(nc, p, nn, lr, m):
+def set_params(p, nn, lr, m):
     return {
-        'n_components': nc,
+        'n_components': 2,
         'perplexity': p,
         'learning_rate': lr,
         'n_neighbors': nn,
@@ -120,14 +120,13 @@ if df is not None:
 
     st.subheader(method)
 
-    n_components = None
     perplexity = None
     learning_rate = None
     n_neighbors = None
     metric = None
 
     if method == 't-SNE':
-        n_components = st.sidebar.number_input("Set number of components", 2, 3, 2)
+        st.sidebar.info("Reducing dimensionality to 2 components")
         perplexity = st.sidebar.slider("Set perplexity", 5, 50, 30)
         set_learning_rate = st.sidebar.checkbox("Set learning rate", False)
         if set_learning_rate is True:
@@ -137,17 +136,17 @@ if df is not None:
             st.sidebar.info("Learning rate is set to 'auto'.")
 
     if method == 'PCA':
-        n_components = st.sidebar.number_input("Set number of components", 2, 3, 2)
+        st.sidebar.info("Reducing dimensionality to 2 components")
 
     if method == 'UMAP' or method == 'PaCMAP':
-        n_components = st.sidebar.number_input("Set number of components", 2, 3, 2)
+        st.sidebar.info("Reducing dimensionality to 2 components")
         n_neighbors = st.sidebar.number_input("Set number of neighbors", 1, 100, 10)
         metric = st.sidebar.selectbox("Set metric", constants.METRICS)
 
     if method == 'TriMAP':
-        n_components = st.sidebar.number_input("Set number of components", 2, 100, 2)
+        st.sidebar.info("Reducing dimensionality to 2 components")
 
-    params = set_params(nc=n_components, p=perplexity, nn=n_neighbors, lr=learning_rate, m=metric)
+    params = set_params(p=perplexity, nn=n_neighbors, lr=learning_rate, m=metric)
 
     if 'show_first_plot' not in st.session_state:
         st.session_state.show_first_plot = False
